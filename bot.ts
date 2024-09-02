@@ -22,7 +22,36 @@ async function getAccessToken() {
   return { token: data.accessJwt, did: data.did };
 }
 
-async function postToBluesky(content: string, token: string, did: string) {
+function createHashtagFacets(content: string) {
+  const regex = /#\w+/g;
+  const facets = [];
+  let match;
+
+  while ((match = regex.exec(content)) !== null) {
+    const byteStart = Buffer.byteLength(content.slice(0, match.index));
+    const byteEnd = byteStart + Buffer.byteLength(match[0]);
+
+    facets.push({
+      index: {
+        byteStart: byteStart,
+        byteEnd: byteEnd,
+      },
+      features: [
+        {
+          $type: "app.bsky.richtext.facet#link",
+          uri: `https://bsky.app/search?q=${encodeURIComponent(match[0])}`,
+        },
+      ],
+    });
+  }
+
+  return facets;
+}
+
+async function postToBluesky(content: string) {
+  
+  content += " #bolhadev";
+
   if (processedPosts.has(content)) {
     console.log(`Já postado: ${content}`);
     return;
@@ -30,12 +59,17 @@ async function postToBluesky(content: string, token: string, did: string) {
 
   console.log(`Postando: ${content}`);
 
+  const { token, did } = await getAccessToken(); 
+
+  const facets = createHashtagFacets(content);
+
   const postData = {
     $type: 'app.bsky.feed.post',
     repo: did,
     collection: 'app.bsky.feed.post',
     record: {
       text: content,
+      facets: facets,
       createdAt: new Date().toISOString(),
     },
   };
@@ -52,7 +86,7 @@ async function postToBluesky(content: string, token: string, did: string) {
 }
 
 function startCountdown(interval: number) {
-  let timeLeft = interval / 1000; // Converter milissegundos para segundos
+  let timeLeft = interval / 1000;
 
   const timer = setInterval(() => {
     const minutes = Math.floor(timeLeft / 60);
@@ -68,13 +102,11 @@ function startCountdown(interval: number) {
 
 async function postFromJson(filePath: string) {
   try {
-    const { token, did } = await getAccessToken();
-
     const data = fs.readFileSync(filePath, 'utf-8');
     const posts: Post[] = JSON.parse(data);
 
     for (let i = 0; i < posts.length; i++) {
-      await postToBluesky(posts[i].content, token, did);
+      await postToBluesky(posts[i].content);
       
       if (i < posts.length - 1) {
         console.log(`Aguardando ${POST_INTERVAL / 1000 / 60} minutos antes da próxima postagem.`);
