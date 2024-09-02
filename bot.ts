@@ -49,7 +49,6 @@ function createHashtagFacets(content: string) {
 }
 
 async function postToBluesky(content: string) {
-  
   content += " #bolhadev";
 
   if (processedPosts.has(content)) {
@@ -59,7 +58,7 @@ async function postToBluesky(content: string) {
 
   console.log(`Postando: ${content}`);
 
-  const { token, did } = await getAccessToken(); 
+  const { token, did } = await getAccessToken();
 
   const facets = createHashtagFacets(content);
 
@@ -85,19 +84,9 @@ async function postToBluesky(content: string) {
   console.log(`Postagem realizada com sucesso: ${data}`);
 }
 
-function startCountdown(interval: number) {
-  let timeLeft = interval / 1000;
-
-  const timer = setInterval(() => {
-    const minutes = Math.floor(timeLeft / 60);
-    const seconds = timeLeft % 60;
-    console.log(`Próxima postagem em: ${minutes} minutos e ${seconds} segundos`);
-    timeLeft--;
-
-    if (timeLeft < 0) {
-      clearInterval(timer);
-    }
-  }, 1000);
+function showNextPostTime(interval: number) {
+  const nextPostTime = new Date(Date.now() + interval).toLocaleTimeString();
+  console.log(`Próxima postagem será às ${nextPostTime}`);
 }
 
 async function postFromJson(filePath: string) {
@@ -107,10 +96,10 @@ async function postFromJson(filePath: string) {
 
     for (let i = 0; i < posts.length; i++) {
       await postToBluesky(posts[i].content);
-      
+
       if (i < posts.length - 1) {
         console.log(`Aguardando ${POST_INTERVAL / 1000 / 60} minutos antes da próxima postagem.`);
-        startCountdown(POST_INTERVAL); // Iniciar a contagem regressiva
+        showNextPostTime(POST_INTERVAL); // Mostra a hora da próxima postagem
         await new Promise((resolve) => setTimeout(resolve, POST_INTERVAL));
       } else {
         console.log('Todas as postagens foram concluídas. Encerrando o bot...');
