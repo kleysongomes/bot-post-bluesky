@@ -51,6 +51,21 @@ async function postToBluesky(content: string, token: string, did: string) {
   console.log(`Postagem realizada com sucesso: ${data}`);
 }
 
+function startCountdown(interval: number) {
+  let timeLeft = interval / 1000; // Converter milissegundos para segundos
+
+  const timer = setInterval(() => {
+    const minutes = Math.floor(timeLeft / 60);
+    const seconds = timeLeft % 60;
+    console.log(`Próxima postagem em: ${minutes} minutos e ${seconds} segundos`);
+    timeLeft--;
+
+    if (timeLeft < 0) {
+      clearInterval(timer);
+    }
+  }, 1000);
+}
+
 async function postFromJson(filePath: string) {
   try {
     const { token, did } = await getAccessToken();
@@ -63,6 +78,7 @@ async function postFromJson(filePath: string) {
       
       if (i < posts.length - 1) {
         console.log(`Aguardando ${POST_INTERVAL / 1000 / 60} minutos antes da próxima postagem.`);
+        startCountdown(POST_INTERVAL); // Iniciar a contagem regressiva
         await new Promise((resolve) => setTimeout(resolve, POST_INTERVAL));
       } else {
         console.log('Todas as postagens foram concluídas. Encerrando o bot...');
