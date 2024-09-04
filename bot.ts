@@ -93,11 +93,13 @@ async function postFromJson(filePath: string) {
   try {
     const data = fs.readFileSync(filePath, 'utf-8');
     const posts: Post[] = JSON.parse(data);
+    const totalPosts = posts.length;
 
-    for (let i = 0; i < posts.length; i++) {
+    for (let i = 0; i < totalPosts; i++) {
+      console.log(`Post ${i + 1}/${totalPosts}`); // Exibe a quantidade de posts já realizados e os restantes
       await postToBluesky(posts[i].content);
 
-      if (i < posts.length - 1) {
+      if (i < totalPosts - 1) {
         console.log(`Aguardando ${POST_INTERVAL / 1000 / 60} minutos antes da próxima postagem.`);
         showNextPostTime(POST_INTERVAL); // Mostra a hora da próxima postagem
         await new Promise((resolve) => setTimeout(resolve, POST_INTERVAL));
